@@ -5,8 +5,11 @@ from odrive.utils import * # so that you can use dump_errors(odrive)
 from odrive.enums import * # so that you can use "AXIS_STATE_..." without needing to put odrive.enums before
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
 
+# tmp is for testing the label update
+tmp = 0
+m0FetTemp = 0
 
 # func to calibrate in the background
 def startCalib(odrive_instance):
@@ -22,10 +25,55 @@ class MainWindow(Gtk.Window):
     def __init__(self):
         super().__init__(title="MainWindow")
        
+        # top level box
+        self.topBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.add(self.topBox)
+
+        # box with buttons
+        self.box1 = Gtk.Box(spacing=6)
+        self.topBox.add(self.box1)
+
+        # box with labels
+        self.box2 = Gtk.Box(spacing=6)
+        self.topBox.add(self.box2) 
+
+        # box with power button
+        self.powerBox = Gtk.Box(spacing=6)
+        self.box1.add(self.powerBox)
+
+        # label 1
+        self.label1 = Gtk.Label(label=f"{m0FetTemp}") 
+        self.label1.set_halign(Gtk.Align.END)
+        self.label1.set_valign(Gtk.Align.END)
+        self.box2.pack_start(self.label1, True, True, 0) 
+        
+        # import image
+        self.image2 = Gtk.Image()
+        self.image2.set_from_file("/home/standard/Downloads/testTopView.png")
+        self.box2.pack_start(self.image2, True, False, 0)
+
+        # label 2
+        self.label2 = Gtk.Label(label=f"{m0FetTemp}")
+        self.label2.set_halign(Gtk.Align.START)
+        self.label2.set_valign(Gtk.Align.END)
+        self.box2.pack_start(self.label2, True, True, 0)
+        
+
         # func to measure temp asynchronously (every 1.5 seconds)
         def measureTemp():
             threading.Timer(1.5, measureTemp).start()
-            print("Measuring temp")
+            print("Measuring temp")            
+            #m0Temp = self.my_drive.axis0.motor.fet_thermistor.temperature
+            global tmp
+            tmp += 1
+            m0Temp = tmp
+            print("m0 temp: ", m0Temp)
+            global m0FetTemp
+            m0FetTemp = m0Temp
+            print("m0FetTemp: ", m0FetTemp)
+
+            GLib.idle_add(self.label1.set_text, str(f"Motor0 Temp: {m0FetTemp}"))
+            GLib.idle_add(self.label2.set_text, str(f"Motor1 Temp: {m0FetTemp}"))
         
         #self.my_drive = None
         # connect to ODrive
@@ -66,20 +114,20 @@ class MainWindow(Gtk.Window):
         self.set_default_size(1280, 720)
 
         # top level box
-        self.topBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.add(self.topBox)
+        #self.topBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        #self.add(self.topBox)
 
         # box with buttons
-        self.box1 = Gtk.Box(spacing=6)
-        self.topBox.add(self.box1)
+        #self.box1 = Gtk.Box(spacing=6)
+        #self.topBox.add(self.box1)
 
         # box with labels
-        self.box2 = Gtk.Box(spacing=6)
-        self.topBox.add(self.box2) 
+        #self.box2 = Gtk.Box(spacing=6)
+        #self.topBox.add(self.box2) 
 
         # box with power button
-        self.powerBox = Gtk.Box(spacing=6)
-        self.box1.add(self.powerBox)
+        #self.powerBox = Gtk.Box(spacing=6)
+        #self.box1.add(self.powerBox)
 
         # button1 
         self.button1 = Gtk.Button(label="Low Regen")
@@ -100,8 +148,8 @@ class MainWindow(Gtk.Window):
         self.box1.pack_start(self.button3, True, True, 0)
 
         # label
-        self.label1 = Gtk.Label(label="Label1")
-        self.box2.pack_start(self.label1, True, False, 0)
+        #self.label1 = Gtk.Label(label=f"{m0FetTemp}")
+        #self.box2.pack_start(self.label1, True, False, 0)
 
     def on_button1_clicked(self, widget):
         print("Low Regen")
