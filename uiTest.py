@@ -7,18 +7,8 @@ from odrive.enums import * # so that you can use "AXIS_STATE_..." without needin
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
-m0FetTemp = 0
 
-# func to measure temp asynchronously (every 1.5 seconds)
-#def measureTemp(odrive_instance):
-#    threading.Timer(1.5, measureTemp(odrive_instance)).start()
-#    m0Temp = odrive_instance.axis0.motor.fet_thermistor.temperature
-#    print("m0 temp: ", m0Temp)
-#    global m0FetTemp
-#    m0FetTemp = m0Temp
-
-
-# func to calibrate in the backgrounf
+# func to calibrate in the background
 def startCalib(odrive_instance):
     odrive_instance.axis0.requested_state = AXIS_STATE_FULL_CALIBRATION_SEQUENCE
     #dump errors after alibration sequence
@@ -28,38 +18,43 @@ def startCalib(odrive_instance):
 
 class MainWindow(Gtk.Window): 
 
+
     def __init__(self):
         super().__init__(title="MainWindow")
+       
+        # func to measure temp asynchronously (every 1.5 seconds)
+        def measureTemp():
+            threading.Timer(1.5, measureTemp).start()
+            print("Measuring temp")
         
-        self.my_drive = None
+        #self.my_drive = None
         # connect to ODrive
-        print("finding ODrive")
-        self.my_drive = odrive.find_any()
-        print("found ODrive")
+        #print("finding ODrive")
+        #self.my_drive = odrive.find_any()
+        #print("found ODrive")
 
-        self.my_drive.axis0.controller.config.vel_gain = 0.1666666716337204
-        self.my_drive.axis0.controller.config.vel_integrator_gain = 0.3333333432674408
-        self.my_drive.axis0.controller.config.control_mode = 2
-        self.my_drive.axis0.controller.config.vel_limit = 10
-        self.my_drive.axis0.motor.config.current_lim =  15
-        # velocity Control Mode
-        self.my_drive.axis0.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
-        self.my_drive.axis0.controller.config.vel_ramp_rate = 0.2
-        self.my_drive.axis0.controller.config.input_mode = INPUT_MODE_VEL_RAMP
+        #self.my_drive.axis0.controller.config.vel_gain = 0.1666666716337204
+        #self.my_drive.axis0.controller.config.vel_integrator_gain = 0.3333333432674408
+        #self.my_drive.axis0.controller.config.control_mode = 2
+        #self.my_drive.axis0.controller.config.vel_limit = 10
+        #self.my_drive.axis0.motor.config.current_lim =  15
+        ## velocity Control Mode
+        #self.my_drive.axis0.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
+        #self.my_drive.axis0.controller.config.vel_ramp_rate = 0.2
+        #self.my_drive.axis0.controller.config.input_mode = INPUT_MODE_VEL_RAMP
 
-        #clear errors (sometimes errors get left over even on startup)
-        self.my_drive.clear_errors()
-        # set pre calib encoders/motors to false on first setup
-        self.my_drive.axis0.encoder.config.pre_calibrated = False
-        self.my_drive.axis0.motor.config.pre_calibrated = False
+        ##clear errors (sometimes errors get left over even on startup)
+        #self.my_drive.clear_errors()
+        ## set pre calib encoders/motors to false on first setup
+        #self.my_drive.axis0.encoder.config.pre_calibrated = False
+        #self.my_drive.axis0.motor.config.pre_calibrated = False
 
-        #start measuring temp 
-        temperature_thread = threading.Timer(1.5, measureTemp)
-        temperature_thread.start()
+        ##start measuring temp 
+        measureTemp() 
 
-        # calibrate encoders asynchronously (testing with index encoders)
-        calibration_thread = threading.Thread(target=startCalib, args=(self.my_drive,)) 
-        calibration_thread.start()
+        ## calibrate encoders asynchronously (testing with index encoders)
+        #calibration_thread = threading.Thread(target=startCalib, args=(self.my_drive,)) 
+        #calibration_thread.start()
 
         # import image
         image = Gtk.Image()
@@ -130,12 +125,13 @@ class MainWindow(Gtk.Window):
     
 
     # func to measure temp asynchronously (every 1.5 seconds)
-    def measureTemp():
-        #threading.Timer(1.5, measureTemp(odrive_instance)).start()
-        m0Temp = self.my_drive.axis0.motor.fet_thermistor.temperature
-        print("m0 temp: ", m0Temp)
-        global m0FetTemp
-        m0FetTemp = m0Temp
+#    def measureTemp():
+#        threading.Timer(1.5, measureTemp())
+#        print("Measuring temp")
+    #    m0Temp = self.my_drive.axis0.motor.fet_thermistor.temperature
+    #    print("m0 temp: ", m0Temp)
+    #    global m0FetTemp
+    #    m0FetTemp = m0Temp
 
 
 win = MainWindow()

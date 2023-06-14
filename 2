@@ -10,12 +10,12 @@ from gi.repository import Gtk, Gdk
 m0FetTemp = 0
 
 # func to measure temp asynchronously (every 1.5 seconds)
-#def measureTemp(odrive_instance):
-#    threading.Timer(1.5, measureTemp(odrive_instance)).start()
-#    m0Temp = odrive_instance.axis0.motor.fet_thermistor.temperature
-#    print("m0 temp: ", m0Temp)
-#    global m0FetTemp
-#    m0FetTemp = m0Temp
+def measureTemp(odrive_instance):
+    #threading.Timer(1.5, measureTemp).start()
+    m0Temp = odrive_instance.axis0.motor.fet_thermistor.temperature
+    print("m0 temp: ", m0Temp)
+    global m0FetTemp
+    m0FetTemp = m0Temp
 
 
 # func to calibrate in the backgrounf
@@ -52,14 +52,12 @@ class MainWindow(Gtk.Window):
         # set pre calib encoders/motors to false on first setup
         self.my_drive.axis0.encoder.config.pre_calibrated = False
         self.my_drive.axis0.motor.config.pre_calibrated = False
-
-        #start measuring temp 
-        temperature_thread = threading.Timer(1.5, measureTemp)
-        temperature_thread.start()
-
         # calibrate encoders asynchronously (testing with index encoders)
         calibration_thread = threading.Thread(target=startCalib, args=(self.my_drive,)) 
         calibration_thread.start()
+        #start measuring temp
+        temperature_thread = threading.Timer(1.5, measureTemp, args=(self.my_drive,)).start()
+        temperature_thread.start() 
 
         # import image
         image = Gtk.Image()
@@ -120,6 +118,7 @@ class MainWindow(Gtk.Window):
     def on_button2_clicked(self, widget):
         print("High Regen")
         self.label1.set_text("High Regen")
+        
         # ODrive: set regen to high (max negative current)
 
 
@@ -127,16 +126,6 @@ class MainWindow(Gtk.Window):
         print("Velocity 15")
         self.label1.set_text("Velocity 15")
         self.my_drive.axis0.controller.input_vel = 15.0
-    
-
-    # func to measure temp asynchronously (every 1.5 seconds)
-    def measureTemp():
-        #threading.Timer(1.5, measureTemp(odrive_instance)).start()
-        m0Temp = self.my_drive.axis0.motor.fet_thermistor.temperature
-        print("m0 temp: ", m0Temp)
-        global m0FetTemp
-        m0FetTemp = m0Temp
-
 
 win = MainWindow()
 win.connect("destroy", Gtk.main_quit)
