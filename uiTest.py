@@ -10,6 +10,7 @@ from gi.repository import Gtk, Gdk, GLib
 # tmp is for testing the label update
 tmp = 0
 m0FetTemp = 0
+m1FetTemp = 0
 
 # func to calibrate in the background
 def startCalib(odrive_instance):
@@ -59,50 +60,54 @@ class MainWindow(Gtk.Window):
         self.box2.pack_start(self.label2, True, True, 0)
         
 
-        # func to measure temp asynchronously (every 1.5 seconds)
+        # func to measure temp asynchronously (every 1.0 seconds)
         def measureTemp():
-            threading.Timer(1.5, measureTemp).start()
-            print("Measuring temp")            
-            #m0Temp = self.my_drive.axis0.motor.fet_thermistor.temperature
-            global tmp
-            tmp += 1
-            m0Temp = tmp
-            print("m0 temp: ", m0Temp)
+            threading.Timer(1.0, measureTemp).start()
+            #print("Measuring temp")            
+            m0Temp = self.my_drive.axis0.motor.fet_thermistor.temperature
+            m1Temp = self.my_drive.axis1.motor.fet_thermistor.temperature
+            #global tmp
+            #tmp += 1
+            m0Temp = round(m0Temp, 2)
+            m1Temp = round(m1Temp, 2)
+            #print("m0 temp: ", m0Temp)
             global m0FetTemp
+            global m1FetTemp
             m0FetTemp = m0Temp
-            print("m0FetTemp: ", m0FetTemp)
+            m1FetTemp = m1Temp
+            #print("m0FetTemp: ", round(m0FetTemp, 2))
 
-            GLib.idle_add(self.label1.set_text, str(f"Motor0 Temp: {m0FetTemp}"))
-            GLib.idle_add(self.label2.set_text, str(f"Motor1 Temp: {m0FetTemp}"))
+            GLib.idle_add(self.label1.set_text, str(f"FET 0 Temp: {m0FetTemp}"))
+            GLib.idle_add(self.label2.set_text, str(f"FET 1 Temp: {m1FetTemp}"))
         
-        #self.my_drive = None
+        self.my_drive = None
         # connect to ODrive
-        #print("finding ODrive")
-        #self.my_drive = odrive.find_any()
-        #print("found ODrive")
+        print("finding ODrive")
+        self.my_drive = odrive.find_any()
+        print("found ODrive")
 
-        #self.my_drive.axis0.controller.config.vel_gain = 0.1666666716337204
-        #self.my_drive.axis0.controller.config.vel_integrator_gain = 0.3333333432674408
-        #self.my_drive.axis0.controller.config.control_mode = 2
-        #self.my_drive.axis0.controller.config.vel_limit = 10
-        #self.my_drive.axis0.motor.config.current_lim =  15
-        ## velocity Control Mode
-        #self.my_drive.axis0.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
-        #self.my_drive.axis0.controller.config.vel_ramp_rate = 0.2
-        #self.my_drive.axis0.controller.config.input_mode = INPUT_MODE_VEL_RAMP
+        self.my_drive.axis0.controller.config.vel_gain = 0.1666666716337204
+        self.my_drive.axis0.controller.config.vel_integrator_gain = 0.3333333432674408
+        self.my_drive.axis0.controller.config.control_mode = 2
+        self.my_drive.axis0.controller.config.vel_limit = 10
+        self.my_drive.axis0.motor.config.current_lim =  15
+        # velocity Control Mode
+        self.my_drive.axis0.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
+        self.my_drive.axis0.controller.config.vel_ramp_rate = 0.2
+        self.my_drive.axis0.controller.config.input_mode = INPUT_MODE_VEL_RAMP
 
-        ##clear errors (sometimes errors get left over even on startup)
-        #self.my_drive.clear_errors()
-        ## set pre calib encoders/motors to false on first setup
-        #self.my_drive.axis0.encoder.config.pre_calibrated = False
-        #self.my_drive.axis0.motor.config.pre_calibrated = False
+        #clear errors (sometimes errors get left over even on startup)
+        self.my_drive.clear_errors()
+        # set pre calib encoders/motors to false on first setup
+        self.my_drive.axis0.encoder.config.pre_calibrated = False
+        self.my_drive.axis0.motor.config.pre_calibrated = False
 
         ##start measuring temp 
         measureTemp() 
 
-        ## calibrate encoders asynchronously (testing with index encoders)
-        #calibration_thread = threading.Thread(target=startCalib, args=(self.my_drive,)) 
-        #calibration_thread.start()
+        # calibrate encoders asynchronously (testing with index encoders)
+        calibration_thread = threading.Thread(target=startCalib, args=(self.my_drive,)) 
+        calibration_thread.start()
 
         # import image
         image = Gtk.Image()
@@ -157,7 +162,7 @@ class MainWindow(Gtk.Window):
         # doesn't work: self.button1.add(self.image)
         # ODrive: set regen to low (max negative current)
         self.my_drive.axis0.requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL
-        self.my_drive.axis0.controller.input_vel = 0.0
+        #self.my_drive.axis0.controller.input_vel = 0.0
 
 
     def on_button2_clicked(self, widget):
